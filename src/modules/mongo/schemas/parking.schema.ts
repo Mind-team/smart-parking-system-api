@@ -12,7 +12,7 @@ export class MongoParking {
   @Prop({ type: String, required: true })
   ownerId: string;
 
-  @Prop({ type: [String], required: true })
+  @Prop({ type: [String], required: true, default: [] })
   activeParkingProcessIds: string[];
 }
 

@@ -8,4 +8,5 @@ export const enum EnvVariable {
   RefreshTokenExpires = 'REFRESH_EXPIRES_IN',
   /** Other */
   SmsEconomyMode = 'SMS_ECONOMY_MODE',
+  CrmModeratorKey = 'CRM_MODERATOR_KEY',
 }

@@ -7,6 +7,7 @@ import {
 import {
   DriverMongoService,
   ParkingMongoService,
+  ParkingOwnerMongoService,
   ParkingProcessMongoService,
 } from './collections';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -19,6 +20,22 @@ import {
   ParkingProcessMongoMapperService,
 } from './mappers';
 import { Provider } from '@nestjs/common/interfaces/modules/provider.interface';
+import { ParkingOwnerSchema } from './schemas/parking-owner.schema';
+
+const mappers: Provider[] = [
+  {
+    provide: MapperInjectionToken.Driver,
+    useClass: DriverMongoMapperService,
+  },
+  {
+    provide: MapperInjectionToken.ParkingProcess,
+    useClass: ParkingProcessMongoMapperService,
+  },
+  {
+    provide: MapperInjectionToken.Parking,
+    useClass: ParkingMongoMapperService,
+  },
+];
 
 const providers: Provider[] = [
   {
@@ -30,24 +47,16 @@ const providers: Provider[] = [
     useClass: DriverMongoService,
   },
   {
-    provide: MapperInjectionToken.Driver,
-    useClass: DriverMongoMapperService,
-  },
-  {
     provide: DatabaseInjectionToken.ParkingProcess,
     useClass: ParkingProcessMongoService,
-  },
-  {
-    provide: MapperInjectionToken.ParkingProcess,
-    useClass: ParkingProcessMongoMapperService,
   },
   {
     provide: DatabaseInjectionToken.Parking,
     useClass: ParkingMongoService,
   },
   {
-    provide: MapperInjectionToken.Parking,
-    useClass: ParkingMongoMapperService,
+    provide: DatabaseInjectionToken.ParkingOwner,
+    useClass: ParkingOwnerMongoService,
   },
 ];
 
@@ -63,9 +72,13 @@ const providers: Provider[] = [
         name: CollectionInjectionToken.Parking,
         schema: ParkingSchema,
       },
+      {
+        name: CollectionInjectionToken.ParkingOwner,
+        schema: ParkingOwnerSchema,
+      },
     ]),
   ],
-  providers: providers,
-  exports: providers,
+  providers: [...mappers, ...providers],
+  exports: [...mappers, ...providers],
 })
 export class MongoModule {}

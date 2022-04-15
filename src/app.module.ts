@@ -5,6 +5,8 @@ import { EnvVariable } from './infrastructure/environment';
 import { DriverModule } from './modules/driver';
 import { CameraModule } from './modules/camera';
 import { AuthModule } from './modules/auth';
+import { ParkingOwnerModule } from './modules/parking-owner';
+import { CrmParkingOwnerModule } from './modules/crm-parking-owner';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { AuthModule } from './modules/auth';
     DriverModule,
     CameraModule,
     AuthModule,
+    ParkingOwnerModule,
+    CrmParkingOwnerModule,
   ],
 })
 export class AppModule {}

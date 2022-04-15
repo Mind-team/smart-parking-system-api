@@ -10,6 +10,13 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Role } from '../enums/role.enum';
 import { AuthInjectionToken, IJwtService } from '../../../infrastructure/auth';
+import {
+  DatabaseInjectionToken,
+  ICollection,
+} from '../../../infrastructure/database';
+import { MongoParkingOwner } from '../../mongo/schemas/parking-owner.schema';
+import { EnvVariable } from '../../../infrastructure/environment';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AvailableGuard implements CanActivate {
@@ -19,9 +26,12 @@ export class AvailableGuard implements CanActivate {
     @Inject(AuthInjectionToken.JwtService)
     private readonly jwtService: IJwtService,
     private readonly reflector: Reflector,
+    @Inject(DatabaseInjectionToken.ParkingOwner)
+    private readonly parkingOwnerDB: ICollection<MongoParkingOwner>,
+    private readonly configService: ConfigService,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     this.req = context.switchToHttp().getRequest();
     this.validateRequest();
     this.initGuardData();
@@ -29,14 +39,36 @@ export class AvailableGuard implements CanActivate {
     const roles = this.reflector.get<Role[]>('roles', context.getHandler());
     this.validateRoles(roles);
 
-    const token = this.req.headers.authorization.split(' ')[1];
-    const decodedJwt = this.jwtService.decodeWithAccessToken(token);
-    if (!decodedJwt.isValid) {
+    if (
+      roles.includes(Role.ModeratorCRM) &&
+      'crm-moderator-key' in this.req.headers
+    ) {
+      const crmModeratorKey = this.configService.get(
+        EnvVariable.CrmModeratorKey,
+      );
+      if (!crmModeratorKey) {
+        throw new Error('В конфиге не указан ключ модераторов');
+      }
+      if (this.req.headers['crm-moderator-key'] === crmModeratorKey) {
+        this.updateGuardData('isCrmModerator', true);
+        return true;
+      }
       throw new UnauthorizedException();
     }
-    this.updateGuardData('isAuth', true);
-    this.updateGuardData('decodedJwt', decodedJwt.data);
-    return true;
+
+    if (roles.includes(Role.ModeratorCRM) && roles.length < 2) {
+      throw new BadRequestException('Не та роль');
+    }
+
+    if (roles.includes(Role.ParkingOwner) && roles.length > 1) {
+      throw new InternalServerErrorException(
+        'Несколько ролей с разными видами авторизациями',
+      );
+    }
+    if (roles.includes(Role.ParkingOwner)) {
+      return this.basicAuth();
+    }
+    return this.jwtAuth();
   }
 
   private initGuardData() {
@@ -69,5 +101,35 @@ export class AvailableGuard implements CanActivate {
       );
       throw new InternalServerErrorException();
     }
+  }
+
+  private jwtAuth(): boolean {
+    const token = this.req.headers.authorization.split(' ')[1];
+    const decodedJwt = this.jwtService.decodeWithAccessToken(token);
+    if (!decodedJwt.isValid) {
+      throw new UnauthorizedException();
+    }
+    this.updateGuardData('isAuth', true);
+    this.updateGuardData('decodedJwt', decodedJwt.data);
+    return true;
+  }
+
+  private async basicAuth(): Promise<boolean> {
+    const b64auth = (this.req.headers.authorization || '').split(' ')[1] || '';
+    const [username, password] = Buffer.from(b64auth, 'base64')
+      .toString()
+      .split(':');
+    const parkingOwnerDocument = await this.parkingOwnerDB.findOne({
+      login: username,
+    });
+    if (!parkingOwnerDocument) {
+      throw new BadRequestException('Нет пользователя');
+    }
+    this.updateGuardData('decodedBasic', {
+      login: parkingOwnerDocument.login,
+      password: parkingOwnerDocument.password,
+    });
+    this.updateGuardData('isAuth', true);
+    return parkingOwnerDocument.password === password;
   }
 }

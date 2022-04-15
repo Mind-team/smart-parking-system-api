@@ -7,5 +7,6 @@ export class FromAvailableDto {
           id: string;
           phone: string;
         };
+    decodedBasic: Record<string, never> | { login: string; password: string };
   };
 }
