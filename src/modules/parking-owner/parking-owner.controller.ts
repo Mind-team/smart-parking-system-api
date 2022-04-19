@@ -1,4 +1,11 @@
-import { Body, Controller, Get, UseGuards, Version } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  UseGuards,
+  Version,
+} from '@nestjs/common';
 import { ParkingOwnerService } from './parking-owner.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
@@ -22,6 +29,18 @@ export class ParkingOwnerController {
   @ApiOkResponse({ type: GetParkingListResponseDto })
   async parkingList(@Body() data: FromAvailableDto) {
     return await this.parkingOwner.parkingList(
+      data.guardData.decodedBasic.login,
+    );
+  }
+
+  @Version('1')
+  @Get('parking/:id')
+  @UseGuards(AvailableGuard)
+  @Available(Role.ParkingOwner)
+  @ApiOperation({ summary: 'Получение конкретного паринга' })
+  async parking(@Param('id') id: string, @Body() data: FromAvailableDto) {
+    return await this.parkingOwner.parking(
+      id,
       data.guardData.decodedBasic.login,
     );
   }
