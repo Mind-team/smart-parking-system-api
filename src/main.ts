@@ -11,7 +11,7 @@ import { AppModule } from './app.module';
 import { EnvVariable } from './infrastructure/environment';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { cors: true });
   const configService: ConfigService = app.get(ConfigService);
 
   app.setGlobalPrefix('api');
