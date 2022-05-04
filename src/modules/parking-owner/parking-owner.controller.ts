@@ -14,7 +14,7 @@ import {
   FromAvailableDto,
   Role,
 } from '../availability';
-import { GetParkingListResponseDto } from './dto';
+import { GetParkingListResponseDto, GetParkingResponseDto } from './dto';
 
 @ApiTags('Владелец паркинга')
 @Controller('parking-owner')
@@ -38,6 +38,7 @@ export class ParkingOwnerController {
   @UseGuards(AvailableGuard)
   @Available(Role.ParkingOwner)
   @ApiOperation({ summary: 'Получение конкретного паринга' })
+  @ApiOkResponse({ type: GetParkingResponseDto })
   async parking(@Param('id') id: string, @Body() data: FromAvailableDto) {
     return await this.parkingOwner.parking(
       id,

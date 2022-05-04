@@ -12,7 +12,8 @@ import {
 } from '../../infrastructure/database';
 import { MongoParkingOwner } from '../mongo/schemas/parking-owner.schema';
 import { MongoParking, MongoParkingProcess } from '../mongo/schemas';
-import { Parking } from '../../core/parking';
+import { IParking } from '../../core/parking';
+import { IParkingProcess } from '../../core/parking-process';
 
 @Injectable()
 export class ParkingOwnerService {
@@ -24,7 +25,12 @@ export class ParkingOwnerService {
     @Inject(DatabaseInjectionToken.Parking)
     private readonly parkingDB: ICollection<MongoParking>,
     @Inject(MapperInjectionToken.Parking)
-    private readonly parkingMapper: Mapper<Parking, MongoParking>,
+    private readonly parkingMapper: Mapper<IParking, MongoParking>,
+    @Inject(MapperInjectionToken.ParkingProcess)
+    private readonly parkingProcessMapper: Mapper<
+      IParkingProcess,
+      MongoParkingProcess
+    >,
   ) {}
 
   async parkingList(login: string) {
@@ -52,6 +58,17 @@ export class ParkingOwnerService {
       throw new UnauthorizedException('Это не ваш паринг');
     }
     const parkingModel = await this.parkingMapper.fromDocument(parkingDB);
-    return parkingModel.privateData();
+    const parkingModelData = parkingModel.privateData();
+    const parkingProcessDocuments = await this.parkingProcessDB.findManyById(
+      parkingModelData.activeParkingProcessIds,
+    );
+    const parkingProcessModels = await Promise.all(
+      parkingProcessDocuments.map(async (doc) => {
+        return (await this.parkingProcessMapper.fromDocument(doc)).asCompleted(
+          (i: number) => i * 20,
+        );
+      }),
+    );
+    return { ...parkingModelData, activeParkingProcess: parkingProcessModels };
   }
 }
