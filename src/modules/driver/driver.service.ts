@@ -13,7 +13,6 @@ import {
   MapperInjectionToken,
   SmartModelInjectionToken,
 } from '../../infrastructure/database';
-import { Driver } from '../../core/driver';
 import {
   MongoDriver,
   MongoParking,
@@ -149,11 +148,6 @@ export class DriverService {
   }
 
   async parkingProcessById(id: string, initiatorId: string) {
-    const parkingProcessModel = await this.parkingProcessMapper.fromDB(id);
-    const parkingProcessModelData = parkingProcessModel.privateData();
-    if (parkingProcessModelData.transport.driverId !== initiatorId) {
-      throw new ForbiddenException('Это не ваш парковочный процесс');
-    }
     if (id === 'current') {
       const driverDocument = await this.driverDB.findById(initiatorId);
       const ppDocuments = await this.parkingProcessDB.findManyById(
@@ -165,6 +159,11 @@ export class DriverService {
         ),
       );
       return ppModels.map((m) => m.asCompleted((i: number) => i * 20));
+    }
+    const parkingProcessModel = await this.parkingProcessMapper.fromDB(id);
+    const parkingProcessModelData = parkingProcessModel.privateData();
+    if (parkingProcessModelData.transport.driverId !== initiatorId) {
+      throw new ForbiddenException('Это не ваш парковочный процесс');
     }
     return parkingProcessModel.privateData(Role.Driver);
   }
