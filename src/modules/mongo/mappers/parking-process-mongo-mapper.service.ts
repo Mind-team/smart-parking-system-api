@@ -85,14 +85,13 @@ export class ParkingProcessMongoMapperService extends Mapper<
       id: document._id,
     };
     if (document.payment) {
-      const config: ExistingPaymentConstructor = {
+      const paymentConfig: ExistingPaymentConstructor = {
         beneficiaryProfit: document.payment.value,
         platformProfit: 0,
         currency: document.payment.currency,
         status: document.payment.status,
       };
-      const payment = new Payment(config);
-      config['payment'] = payment;
+      config['payment'] = new Payment(paymentConfig);
     }
     return new ParkingProcess(config);
   }
