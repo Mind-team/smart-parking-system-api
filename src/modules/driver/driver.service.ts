@@ -130,6 +130,13 @@ export class DriverService {
       phone: driverDocument.personData.phone,
     });
 
+    await this.driverDB.updateOne(
+      { 'personData.phone': phone },
+      await this.driverMapper.toDocument(driverModel, {
+        data: { refreshToken },
+      }),
+    );
+
     return { ...driverModel.privateData(), accessToken, refreshToken };
   }
 
