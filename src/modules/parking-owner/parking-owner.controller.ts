@@ -1,13 +1,20 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   Param,
+  Query,
   UseGuards,
   Version,
 } from '@nestjs/common';
 import { ParkingOwnerService } from './parking-owner.service';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import {
   Available,
   AvailableGuard,
@@ -15,6 +22,7 @@ import {
   Role,
 } from '../availability';
 import { GetParkingListResponseDto, GetParkingResponseDto } from './dto';
+import { GetDriverResponseDto } from './dto/driver/get-driver-response.dto';
 
 @ApiTags('Владелец паркинга')
 @Controller('parking-owner')
@@ -44,5 +52,23 @@ export class ParkingOwnerController {
       id,
       data.guardData.decodedBasic.login,
     );
+  }
+
+  @Version('1')
+  @Get('driver')
+  @UseGuards(AvailableGuard)
+  @Available(Role.ParkingOwner)
+  @ApiQuery({ name: 'phone', type: 'string' })
+  @ApiOperation({ summary: 'Получение данные водителя' })
+  @ApiOkResponse({
+    type: GetDriverResponseDto,
+    description:
+      'Если пользователь зарегистрирован, то точно вернется номер телефон. Если он в лк указал свои данные, то они тоже. Если пользователь не зарегистрирован, то поля будут null',
+  })
+  async driver(@Query('phone') phone: string) {
+    if (!phone || phone.length < 11) {
+      throw new BadRequestException('Неправильный формат номера телефона');
+    }
+    return await this.parkingOwner.driver(phone);
   }
 }

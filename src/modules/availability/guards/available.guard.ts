@@ -115,7 +115,13 @@ export class AvailableGuard implements CanActivate {
   }
 
   private async basicAuth(): Promise<boolean> {
-    const b64auth = (this.req.headers.authorization || '').split(' ')[1] || '';
+    if (
+      !this.req.headers.authorization ||
+      this.req.headers.authorization === ''
+    ) {
+      throw new BadRequestException('Нет данных для авторизации (basic)');
+    }
+    const b64auth = this.req.headers.authorization.split(' ')[1] || '';
     const [username, password] = Buffer.from(b64auth, 'base64')
       .toString()
       .split(':');

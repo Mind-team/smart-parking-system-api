@@ -11,9 +11,15 @@ import {
   MapperInjectionToken,
 } from '../../infrastructure/database';
 import { MongoParkingOwner } from '../mongo/schemas/parking-owner.schema';
-import { MongoParking, MongoParkingProcess } from '../mongo/schemas';
+import {
+  MongoDriver,
+  MongoParking,
+  MongoParkingProcess,
+} from '../mongo/schemas';
 import { IParking } from '../../core/parking';
 import { IParkingProcess } from '../../core/parking-process';
+import { IDriver } from '../../core/driver';
+import { IPersonPrivateData } from '../../core/person';
 
 @Injectable()
 export class ParkingOwnerService {
@@ -31,6 +37,10 @@ export class ParkingOwnerService {
       IParkingProcess,
       MongoParkingProcess
     >,
+    @Inject(DatabaseInjectionToken.Driver)
+    private readonly driverDB: ICollection<MongoDriver>,
+    @Inject(MapperInjectionToken.Driver)
+    private readonly driverMapper: Mapper<IDriver, MongoDriver>,
   ) {}
 
   async parkingList(login: string) {
@@ -70,5 +80,16 @@ export class ParkingOwnerService {
       }),
     );
     return { ...parkingModelData, activeParkingProcess: parkingProcessModels };
+  }
+
+  async driver(phoneNumber: string): Promise<IPersonPrivateData> {
+    const driverDocument = await this.driverDB.findOne({
+      'personData.phone': phoneNumber,
+    });
+    if (!driverDocument) {
+      return { phone: null, email: null };
+    }
+    const driverModel = await this.driverMapper.fromDocument(driverDocument);
+    return driverModel.privateData().personData;
   }
 }
