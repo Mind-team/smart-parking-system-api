@@ -21,8 +21,11 @@ import {
   FromAvailableDto,
   Role,
 } from '../availability';
-import { GetParkingListResponseDto, GetParkingResponseDto } from './dto';
-import { GetDriverResponseDto } from './dto/driver/get-driver-response.dto';
+import {
+  GetParkingListResponseDto,
+  GetParkingResponseDto,
+  GetDriverResponseDto,
+} from './dto';
 
 @ApiTags('Владелец паркинга')
 @Controller('parking-owner')
