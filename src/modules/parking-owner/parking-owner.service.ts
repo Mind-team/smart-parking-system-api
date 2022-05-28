@@ -82,9 +82,9 @@ export class ParkingOwnerService {
     return { ...parkingModelData, activeParkingProcess: parkingProcessModels };
   }
 
-  async driver(phoneNumber: string): Promise<IPersonPrivateData> {
+  async driver(plate: string): Promise<IPersonPrivateData> {
     const driverDocument = await this.driverDB.findOne({
-      'personData.phone': phoneNumber,
+      transportPlates: { $in: [plate] },
     });
     if (!driverDocument) {
       return { phone: null, email: null };

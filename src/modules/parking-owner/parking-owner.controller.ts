@@ -61,17 +61,19 @@ export class ParkingOwnerController {
   @Get('driver')
   @UseGuards(AvailableGuard)
   @Available(Role.ParkingOwner)
-  @ApiQuery({ name: 'phone', type: 'string' })
+  @ApiQuery({ name: 'plate', type: 'string' })
   @ApiOperation({ summary: 'Получение данные водителя' })
   @ApiOkResponse({
     type: GetDriverResponseDto,
     description:
       'Если пользователь зарегистрирован, то точно вернется номер телефон. Если он в лк указал свои данные, то они тоже. Если пользователь не зарегистрирован, то поля будут null',
   })
-  async driver(@Query('phone') phone: string) {
-    if (!phone || phone.length < 11) {
-      throw new BadRequestException('Неправильный формат номера телефона');
+  async driver(@Query('plate') plate: string) {
+    if (!plate || plate === '') {
+      throw new BadRequestException(
+        'Неправильный формат номера транспортного средства',
+      );
     }
-    return await this.parkingOwner.driver(phone);
+    return await this.parkingOwner.driver(plate);
   }
 }
