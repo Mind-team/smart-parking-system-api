@@ -151,7 +151,9 @@ export class DriverService {
         return await this.parkingProcessMapper.fromDocument(pp);
       }),
     );
-    return completedParkingProcessModels.map((pp) => pp.privateData());
+    return completedParkingProcessModels
+      .reverse()
+      .map((pp) => pp.privateData());
   }
 
   async parkingProcessById(id: string, initiatorId: string) {
@@ -165,7 +167,7 @@ export class DriverService {
           this.parkingProcessMapper.fromDocument(ppDoc),
         ),
       );
-      return ppModels.map((m) => m.asCompleted((i: number) => i * 20));
+      return ppModels.map((m) => m.asCompleted((i: number) => i * 2));
     }
     const parkingProcessModel = await this.parkingProcessMapper.fromDB(id);
     const parkingProcessModelData = parkingProcessModel.privateData();
