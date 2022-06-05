@@ -75,7 +75,7 @@ export class ParkingOwnerService {
     const parkingProcessModels = await Promise.all(
       parkingProcessDocuments.map(async (doc) => {
         return (await this.parkingProcessMapper.fromDocument(doc)).asCompleted(
-          (i: number) => i * 20,
+          (i: number) => i * 2,
         );
       }),
     );
